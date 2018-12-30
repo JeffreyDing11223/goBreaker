@@ -11,7 +11,7 @@ import ()
 //    |                    cooling timeout   |
 //    ^                          |           ^
 //    |                          v           |
-//    +--- detect succeed --<-[HALFOPEN]-->--+
+//    --<- detect succeed --<-[HALFOPEN]-->---
 
 type State int
 
