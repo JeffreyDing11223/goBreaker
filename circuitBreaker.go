@@ -46,6 +46,12 @@ const (
 	// HALFOPEN_SUCCESSES is the threshold when the breaker is in HALFOPEN;
 	// after secceeding consecutively this times, it will change its state from HALFOPEN to CLOSED;
 	DEFAULT_HALFOPEN_SUCCESSES = 2
+
+	// RateTrip Rate
+	DEFAULT_BREAKER_RATE = 0.5
+
+	// MinSamples for RateTrip (single instance)
+	DEFAULT_BREAKER_MINSAMPLES = 200
 )
 
 // TripFunc is a function called by a Breaker when error appears and
@@ -77,12 +83,12 @@ type Options struct {
 
 	// parameters for breaker
 	BreakerRate        float64
-	BreakerMinQPS      int           // if qps is over this value, the breaker trip will work
+	BreakerMinQPS      int           // when instance > 1, if qps is over this value, the breaker trip will work
 	BreakerMinSamples  int           // for RateTrip callback
 	CoolingTimeout     time.Duration // fixed when create
 	DetectTimeout      time.Duration // fixed when create
 	HalfOpenSuccess    int
-	ShouldTrip         TripFunc // trip callback, default is RateTrip
+	ShouldTrip         TripFunc // trip callback, default is RateTrip func
 	StateChangeHandler StateChangeHandler
 
 	now func() time.Time
@@ -170,7 +176,7 @@ func (b *Breaker) Succeed() {
 	case CLOSED:
 		b.Container.Succeed()
 	}
-	b.Unlock() // don't use defer
+	b.Unlock()
 }
 
 func (b *Breaker) error(isTimeout bool, trip TripFunc) {
@@ -199,7 +205,7 @@ func (b *Breaker) error(isTimeout bool, trip TripFunc) {
 			b.state = OPEN
 		}
 	}
-	b.Unlock() // don't use defer
+	b.Unlock()
 }
 
 func (b *Breaker) Fail() {
