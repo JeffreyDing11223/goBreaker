@@ -7,6 +7,17 @@ import (
 	"time"
 )
 
+const (
+	// bucket time is the time each bucket holds
+	DEFAULT_BUCKET_TIME = time.Millisecond * 100
+
+	// bucket nums is the number of buckets the container has;
+	DEFAULT_BUCKET_NUMS = 100
+
+	// default window size is (DEFAULT_BUCKET_TIME * DEFAULT_BUCKET_NUMS)
+	// it is 10 seconds
+)
+
 // Container contains errors, timeouts and successes
 type Container interface {
 	Fail()    // records a failure
@@ -23,19 +34,6 @@ type Container interface {
 
 	Reset()
 }
-
-const (
-	// bucket time is the time each bucket holds
-	DEFAULT_BUCKET_TIME = time.Millisecond * 100
-
-	// bucket nums is the number of buckets the container has;
-	// the more buckets you have, the less counters you lose when
-	// the oldest bucket expire;
-	DEFAULT_BUCKET_NUMS = 100
-
-	// default window size is (DEFAULT_BUCKET_TIME * DEFAULT_BUCKET_NUMS)
-	// it is 10 seconds;
-)
 
 // bucket holds counts of failures and successes
 type bucket struct {
@@ -82,26 +80,20 @@ func (b *bucket) TimeStamp() int64 {
 	return atomic.LoadInt64(&b.timeStamp)
 }
 
-// window maintains a ring of buckets and increments the failure and success
-// counts of the current bucket.
+// window maintains a slice of buckets and increments the failure and success
+// counts of the current bucket
 type window struct {
 	sync.Mutex
 	oldest  int       // oldest bucket index
 	latest  int       // latest bucket index
-	buckets []*bucket // buckets this window holds
+	buckets []*bucket // buckets this window has
 
 	bucketTime time.Duration // time each bucket holds
-	bucketNums int           // the numbe of buckets
-	expireTime time.Duration // expire time of this window
-	inWindow   int           // the number of buckets in the window
+	bucketNums int           // the largest number of buckets of window could have
+	expireTime time.Duration // expire time of this window, equals to window size
+	inWindow   int           // the number of buckets in the window currently
 
 	conseErr int64 //consecutive errors
-}
-
-// NewWindow
-func NewWindow() Container {
-	m, _ := NewWindowWithOptions(DEFAULT_BUCKET_TIME, DEFAULT_BUCKET_NUMS)
-	return m
 }
 
 // NewWindowWithOptions creates a new window
