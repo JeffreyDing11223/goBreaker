@@ -46,6 +46,7 @@ func (b *CircuitBreaker) GetAllBreakers() map[int32]*Breaker {
 	return breakers
 }
 
+// when instances >1, you can use AdjustBreakers
 //count means how many instances you have
 func (b *CircuitBreaker) AdjustBreakers(count int, options Options) {
 	var preCount, breakerWindows int
